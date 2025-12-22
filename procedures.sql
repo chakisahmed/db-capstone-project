@@ -1,3 +1,37 @@
+DROP PROCEDURE IF EXISTS GetMaxQuantity;
+
+DELIMITER //
+SELECT MAX(total_qty) AS "Max Quantity in Order" 
+FROM ( SELECT OrderID, SUM(Quantity) AS total_qty FROM OrderItems GROUP BY OrderID ) t;
+CREATE PROCEDURE GetMaxQuantity() BEGIN  
+
+END//
+
+DELIMITER ;
+
+CALL GetMaxQuantity();
+
+DROP PROCEDURE IF EXISTS CancelOrder;
+DELIMITER $$
+CREATE PROCEDURE CancelOrder(IN p_OrderID INT)
+BEGIN
+DECLARE v_exists INT;
+
+SELECT COUNT(*) INTO v_exists FROM Orders WHERE OrderID = p_OrderID;
+IF (v_exists>0) then
+DELETE FROM OrderItems WHERE OrderID = p_OrderID;
+DELETE FROM Orders WHERE OrderID = p_OrderID;
+Select CONCAT('successfully deleted order ', p_OrderID);
+else
+	Select "Order not found";
+end if;
+end$$
+
+DELIMITER ;
+
+Call CancelOrder(9999);
+
+
 DROP PROCEDURE IF EXISTS AddBooking;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `AddBooking`(
