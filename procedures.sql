@@ -66,7 +66,7 @@ BEGIN
 
   SELECT COUNT(*) INTO v_count
   FROM Bookings b
-  WHERE b.BookingDateTime = p_BookingDateTime
+  WHERE DATE(b.BookingDateTime) = DATE(p_BookingDateTime)
     AND b.TableNumber = p_TableNumber;
 
   IF v_count > 0 THEN
@@ -132,5 +132,31 @@ BEGIN
   END IF;
 END$$
 DELIMITER ;
+
+Drop PROCEDURE IF EXISTS AddValidBooking;
+DELIMITER $$
+
+CREATE PROCEDURE AddValidBooking(IN p_BookingDateTime DATETIME, IN p_TableNumber INT, IN p_CustomerID INT)
+BEGIN
+DECLARE v_conflict INT;
+
+START TRANSACTION;
+SELECT COUNT(*) INTO v_conflict from Bookings b where DATE(b.BookingDateTime) = DATE(p_BookingDateTime) and b.TableNumber = p_TableNumber;
+IF v_conflict > 0 THEN 
+
+ROLLBACK; 
+SELECT 'Table is already booked' ; 
+ELSE 
+INSERT INTO Bookings (BookingDateTime, TableNumber, CustomerID) VALUES (p_BookingDateTime, p_TableNumber, p_CustomerID);
+COMMIT; 
+SELECT 'Successfully booked table' ; 
+END IF;
+End$$
+
+DELIMITER ;
+
+CALL AddValidBooking('2022-10-10 20:00:00', 5, 1);
+SELECT * FROM Bookings
+WHERE DATE(BookingDateTime)='2022-10-10' AND TableNumber=5;
 
 
